@@ -18,3 +18,7 @@ Open a PowerShell console and type the following:
  .\iso-check.ps1
 ```
  to use the script.
+
+## Screenshot ##
+
+![Screenshot](screenshot.png)
