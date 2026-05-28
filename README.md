@@ -1,9 +1,19 @@
-# iso-check
+# iso-check #
+
 A PowerShell script for verifying the integrity of ISO files
 
+## What does this script do? ##
 
+The script searches the specified folder for ISO files and checks whether an SHA256 file with the same identifier exists. It then calculates the checksum and compares it.
 
-Type
+## Usage ##
+
+Customize this line to suit your needs:
+```
+$root = "M:\CD DVD Images\OS\Linux"   # <-- Anpassen!
+```
+
+Open a PowerShell console and type the following:
 ```
  .\iso-check.ps1
 ```
