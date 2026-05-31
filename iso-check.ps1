@@ -1,44 +1,67 @@
-$root = "M:\CD DVD Images\OS\Linux"   # <-- Anpassen!
+$root = "C:\Pfad\zu\ISO"   # <-- Anpassen!
 
 Get-ChildItem -Path $root -Recurse -Filter *.iso | ForEach-Object {
     $iso = $_.FullName
-    $isoBase = [System.IO.Path]::GetFileNameWithoutExtension($iso)
+    $dir = $_.DirectoryName
+    $base = [System.IO.Path]::GetFileNameWithoutExtension($iso)
 
-    # Mögliche SHA-Dateinamen:
-    # 1) dateiname.iso.sha256
-    # 2) dateiname.sha256
-    $shaCandidates = @(
-        "$iso.sha256"
-        (Join-Path $_.DirectoryName "$isoBase.sha256")
+    # Kandidaten in Priorität: SHA256 → SHA1 → MD5
+    $hashTypes = @(
+        @{ Algo = "SHA256"; Ext = "sha256" },
+        @{ Algo = "SHA1";   Ext = "sha1"   },
+        @{ Algo = "MD5";    Ext = "md5"    }
     )
 
-    # Existierende SHA-Datei finden
-    $shaFile = $shaCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    $selected = $null
 
-    if (-not $shaFile) {
-        Write-Host "❌ Keine passende SHA256-Datei gefunden für $iso" -ForegroundColor Yellow
+    foreach ($ht in $hashTypes) {
+        $candidates = @(
+            Join-Path $dir ($_.Name + "." + $ht.Ext)      # datei.iso.sha256
+            Join-Path $dir ($base + "." + $ht.Ext)        # datei.sha256
+        )
+
+        foreach ($c in $candidates) {
+            if (Test-Path $c) {
+                $selected = @{
+                    File = $c
+                    Algo = $ht.Algo
+                }
+                break
+            }
+        }
+        if ($selected) { break }
+    }
+
+    if (-not $selected) {
+        Write-Host "❌ Keine Hash-Datei (SHA256/SHA1/MD5) gefunden für $iso" -ForegroundColor Yellow
         return
     }
 
-    # SHA256-Zeile lesen
-    $line = (Get-Content $shaFile | Select-Object -First 1).Trim()
+    # Hash-Zeile lesen
+    $line = (Get-Content $selected.File | Select-Object -First 1).Trim()
 
-    # Hash extrahieren (erste 64 Hex-Zeichen)
-    if ($line -match "^[0-9a-fA-F]{64}") {
+    # Hash extrahieren (erste gültige Hex-Zeichenfolge)
+    switch ($selected.Algo) {
+        "SHA256" { $regex = "^[0-9a-fA-F]{64}" }
+        "SHA1"   { $regex = "^[0-9a-fA-F]{40}" }
+        "MD5"    { $regex = "^[0-9a-fA-F]{32}" }
+    }
+
+    if ($line -match $regex) {
         $expectedHash = $matches[0]
     } else {
-        Write-Host "❌ Ungültiges SHA256-Format in $shaFile" -ForegroundColor Red
+        Write-Host "❌ Ungültiges Format in $($selected.File)" -ForegroundColor Red
         return
     }
 
     # Tatsächlichen Hash berechnen
-    $actualHash = (Get-FileHash -Path $iso -Algorithm SHA256).Hash
+    $actualHash = (Get-FileHash -Path $iso -Algorithm $selected.Algo).Hash
 
     if ($expectedHash.ToLower() -eq $actualHash.ToLower()) {
-        Write-Host "✔  OK: $($_.Name) ist gültig" -ForegroundColor Green
+        Write-Host "✔  OK ($($selected.Algo)): $($_.Name) ist gültig" -ForegroundColor Green
     } else {
-        Write-Host "❌ FEHLER: $($_.Name) ist beschädigt oder falsch!" -ForegroundColor Red
-        Write-Host "   Erwartet:    $expectedHash"
+        Write-Host "❌ FEHLER ($($selected.Algo)): $($_.Name) ist beschädigt oder falsch!" -ForegroundColor Red
+        Write-Host "   Erwartet:   $expectedHash"
         Write-Host "   Tatsächlich: $actualHash"
     }
 }
