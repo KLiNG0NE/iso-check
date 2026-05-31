@@ -10,7 +10,7 @@ The script searches the specified folder for ISO files and checks whether an SHA
 
 Customize this line to suit your needs:
 ```
-$root = "M:\CD DVD Images\OS\Linux"   # <-- Anpassen!
+$root = "C:\Pfad\zu\ISO"   # <-- Anpassen!
 ```
 
 Open a PowerShell console and type the following:
