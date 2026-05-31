@@ -61,7 +61,7 @@ Get-ChildItem -Path $root -Recurse -Filter *.iso | ForEach-Object {
         Write-Host "✔  OK ($($selected.Algo)): $($_.Name) ist gültig" -ForegroundColor Green
     } else {
         Write-Host "❌ FEHLER ($($selected.Algo)): $($_.Name) ist beschädigt oder falsch!" -ForegroundColor Red
-        Write-Host "   Erwartet:   $expectedHash"
+        Write-Host "   Erwartet:    $expectedHash"
         Write-Host "   Tatsächlich: $actualHash"
     }
 }
