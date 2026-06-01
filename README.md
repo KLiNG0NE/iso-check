@@ -4,7 +4,7 @@ A PowerShell script for verifying the integrity of ISO files
 
 ## What does this script do? ##
 
-The script searches the specified folder for ISO files and checks whether an SHA256 file with the same identifier exists. It then calculates the checksum and compares it.
+The script searches the specified folder for ISO files and checks whether an SHA256, SHA1  or MD5 file with the same identifier exists. It then calculates the checksum and compares it.
 
 ## Usage ##
 
